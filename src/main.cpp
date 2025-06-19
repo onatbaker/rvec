@@ -1,6 +1,6 @@
 #include <iostream>
 #include <cassert>
-#include "rope_vector.hpp"
+#include "rvec/rope_vector.hpp"
 
 int main() {
     using rvec::rope_vector;

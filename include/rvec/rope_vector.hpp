@@ -84,7 +84,7 @@ namespace rvec {
             else {
                 ensure_capacity_for(new_size - 1);
                 for (size_type i = total_size; i < new_size; ++i) {
-                    (*this)[i] = T{};
+                    chunks[chunk_index(i)][within_chunk_index(i)] = T{};
                 }
                 total_size = new_size;
             }
