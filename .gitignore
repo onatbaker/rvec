@@ -1,0 +1,76 @@
+# Compiled Object files
+*.o
+*.obj
+*.slo
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+*.lai
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Debug and log files
+*.ilk
+*.map
+*.exp
+*.pdb
+*.log
+*.tlog
+
+# Cache and temporary
+*.sdf
+*.ipch
+*.aps
+*.ncb
+*.opendb
+*.opensdf
+*.VC.db
+*.VC.VC.opendb
+*.cache
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio folders
+.vs/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+x64/
+x86/
+Debug/
+Release/
+
+# CMake
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+build/
+cmake-build-*/
+
+# CLion / JetBrains IDEs
+.idea/
+.idea/*
+
+# Rider
+*.sln.iml
+
+*.sln
+*.vcxproj
+*.vcxproj.filters
