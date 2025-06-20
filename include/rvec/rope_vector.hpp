@@ -4,6 +4,7 @@
 #include <memory>
 #include <cassert>
 #include <stdexcept>
+#include <iterator>
 
 namespace rvec
 {
@@ -159,7 +160,7 @@ namespace rvec
                 throw std::out_of_range("insert position out of bounds");
             }
 
-            push_back(T{}); // make space
+            push_back(T{});
 
             for (size_type i = total_size - 1; i > pos; --i)
             {
@@ -182,6 +183,131 @@ namespace rvec
             }
 
             --total_size;
+        }
+
+        class iterator
+        {
+        public:
+            using iterator_category = std::random_access_iterator_tag;
+            using value_type = T;
+            using difference_type = std::ptrdiff_t;
+            using pointer = T*;
+            using reference = T&;
+
+        private:
+            rope_vector* parent = nullptr;
+            size_type index = 0;
+
+        public:
+            iterator() = default;
+
+            iterator(rope_vector* rv, size_type i)
+                : parent(rv), index(i)
+            {
+            }
+
+            reference operator*() const
+            {
+                return (*parent)[index];
+            }
+
+            pointer operator->() const
+            {
+                return &(*parent)[index];
+            }
+
+            iterator& operator++()
+            {
+                ++index;
+                return *this;
+            }
+
+            iterator operator++(int)
+            {
+                iterator tmp = *this;
+                ++(*this);
+                return tmp;
+            }
+
+            iterator& operator--()
+            {
+                --index;
+                return *this;
+            }
+
+            iterator operator--(int)
+            {
+                iterator tmp = *this;
+                --(*this);
+                return tmp;
+            }
+
+            iterator& operator+=(difference_type n)
+            {
+                index += n;
+                return *this;
+            }
+
+            iterator& operator-=(difference_type n)
+            {
+                index -= n;
+                return *this;
+            }
+
+            iterator operator+(difference_type n) const
+            {
+                return iterator(parent, index + n);
+            }
+
+            iterator operator-(difference_type n) const
+            {
+                return iterator(parent, index - n);
+            }
+
+            difference_type operator-(const iterator& other) const
+            {
+                return static_cast<difference_type>(index) - static_cast<difference_type>(other.index);
+            }
+
+            bool operator==(const iterator& other) const
+            {
+                return index == other.index;
+            }
+
+            bool operator!=(const iterator& other) const
+            {
+                return index != other.index;
+            }
+
+            bool operator<(const iterator& other) const
+            {
+                return index < other.index;
+            }
+
+            bool operator>(const iterator& other) const
+            {
+                return index > other.index;
+            }
+
+            bool operator<=(const iterator& other) const
+            {
+                return index <= other.index;
+            }
+
+            bool operator>=(const iterator& other) const
+            {
+                return index >= other.index;
+            }
+        };
+
+        iterator begin()
+        {
+            return iterator(this, 0);
+        }
+
+        iterator end()
+        {
+            return iterator(this, total_size);
         }
     };
 
