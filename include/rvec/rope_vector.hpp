@@ -4,7 +4,6 @@
 #include <memory>
 #include <cassert>
 #include <stdexcept>
-#include <iterator>
 
 namespace rvec
 {
@@ -448,6 +447,266 @@ namespace rvec
         const_iterator end() const noexcept
         {
             return cend();
+        }
+
+        class reverse_iterator
+        {
+        public:
+            using iterator_category = std::random_access_iterator_tag;
+            using value_type = T;
+            using difference_type = std::ptrdiff_t;
+            using pointer = T*;
+            using reference = T&;
+
+        private:
+            rope_vector* parent = nullptr;
+            size_type index = 0;
+
+        public:
+            reverse_iterator() = default;
+
+            reverse_iterator(rope_vector* rv, size_type i)
+                : parent(rv), index(i)
+            {
+            }
+
+            reference operator*() const
+            {
+                return (*parent)[index - 1];
+            }
+
+            pointer operator->() const
+            {
+                return &(*parent)[index - 1];
+            }
+
+            reverse_iterator& operator++()
+            {
+                --index;
+                return *this;
+            }
+
+            reverse_iterator operator++(int)
+            {
+                reverse_iterator tmp = *this;
+                --(*this);
+                return tmp;
+            }
+
+            reverse_iterator& operator--()
+            {
+                ++index;
+                return *this;
+            }
+
+            reverse_iterator operator--(int)
+            {
+                reverse_iterator tmp = *this;
+                ++(*this);
+                return tmp;
+            }
+
+            reverse_iterator& operator+=(difference_type n)
+            {
+                index -= n;
+                return *this;
+            }
+
+            reverse_iterator& operator-=(difference_type n)
+            {
+                index += n;
+                return *this;
+            }
+
+            reverse_iterator operator+(difference_type n) const
+            {
+                return reverse_iterator(parent, index - n);
+            }
+
+            reverse_iterator operator-(difference_type n) const
+            {
+                return reverse_iterator(parent, index + n);
+            }
+
+            difference_type operator-(const reverse_iterator& other) const
+            {
+                return static_cast<difference_type>(other.index) - static_cast<difference_type>(index);
+            }
+
+            bool operator==(const reverse_iterator& other) const
+            {
+                return index == other.index && parent == other.parent;
+            }
+
+            bool operator!=(const reverse_iterator& other) const
+            {
+                return !(*this == other);
+            }
+
+            bool operator<(const reverse_iterator& other) const
+            {
+                return index > other.index;
+            }
+
+            bool operator>(const reverse_iterator& other) const
+            {
+                return index < other.index;
+            }
+
+            bool operator<=(const reverse_iterator& other) const
+            {
+                return index >= other.index;
+            }
+
+            bool operator>=(const reverse_iterator& other) const
+            {
+                return index <= other.index;
+            }
+        };
+
+        reverse_iterator rbegin()
+        {
+            return reverse_iterator(this, total_size);
+        }
+
+        reverse_iterator rend()
+        {
+            return reverse_iterator(this, 0);
+        }
+
+        class const_reverse_iterator
+        {
+        public:
+            using iterator_category = std::random_access_iterator_tag;
+            using value_type = T;
+            using difference_type = std::ptrdiff_t;
+            using pointer = const T*;
+            using reference = const T&;
+
+        private:
+            const rope_vector* parent = nullptr;
+            size_type index = 0;
+
+        public:
+            const_reverse_iterator() = default;
+
+            const_reverse_iterator(const rope_vector* rv, size_type i)
+                : parent(rv), index(i)
+            {
+            }
+
+            reference operator*() const
+            {
+                return (*parent)[index - 1];
+            }
+
+            pointer operator->() const
+            {
+                return &(*parent)[index - 1];
+            }
+
+            const_reverse_iterator& operator++()
+            {
+                --index;
+                return *this;
+            }
+
+            const_reverse_iterator operator++(int)
+            {
+                const_reverse_iterator tmp = *this;
+                --(*this);
+                return tmp;
+            }
+
+            const_reverse_iterator& operator--()
+            {
+                ++index;
+                return *this;
+            }
+
+            const_reverse_iterator operator--(int)
+            {
+                const_reverse_iterator tmp = *this;
+                ++(*this);
+                return tmp;
+            }
+
+            const_reverse_iterator& operator+=(difference_type n)
+            {
+                index -= n;
+                return *this;
+            }
+
+            const_reverse_iterator& operator-=(difference_type n)
+            {
+                index += n;
+                return *this;
+            }
+
+            const_reverse_iterator operator+(difference_type n) const
+            {
+                return const_reverse_iterator(parent, index - n);
+            }
+
+            const_reverse_iterator operator-(difference_type n) const
+            {
+                return const_reverse_iterator(parent, index + n);
+            }
+
+            difference_type operator-(const const_reverse_iterator& other) const
+            {
+                return static_cast<difference_type>(other.index) - static_cast<difference_type>(index);
+            }
+
+            bool operator==(const const_reverse_iterator& other) const
+            {
+                return index == other.index && parent == other.parent;
+            }
+
+            bool operator!=(const const_reverse_iterator& other) const
+            {
+                return !(*this == other);
+            }
+
+            bool operator<(const const_reverse_iterator& other) const
+            {
+                return index > other.index;
+            }
+
+            bool operator>(const const_reverse_iterator& other) const
+            {
+                return index < other.index;
+            }
+
+            bool operator<=(const const_reverse_iterator& other) const
+            {
+                return index >= other.index;
+            }
+
+            bool operator>=(const const_reverse_iterator& other) const
+            {
+                return index <= other.index;
+            }
+        };
+
+        const_reverse_iterator rbegin() const
+        {
+            return const_reverse_iterator(this, total_size);
+        }
+
+        const_reverse_iterator rend() const
+        {
+            return const_reverse_iterator(this, 0);
+        }
+
+        const_reverse_iterator crbegin() const
+        {
+            return const_reverse_iterator(this, total_size);
+        }
+
+        const_reverse_iterator crend() const
+        {
+            return const_reverse_iterator(this, 0);
         }
     };
 } // namespace rvec

@@ -3,91 +3,79 @@
 #include "rvec/rope_vector.hpp"
 
 int main() {
-    /*
-    using rvec::rope_vector;
-
-    rope_vector<int> rv;
-
-    // testing the empty
-    assert(rv.empty());
-    assert(rv.size() == 0);
-
-    // tseting push_back
-    rv.push_back(10);
-    rv.push_back(20);
-    rv.push_back(30);
-
-    assert(!rv.empty());
-    assert(rv.size() == 3);
-    assert(rv[0] == 10);
-    assert(rv[1] == 20);
-    assert(rv[2] == 30);
-    assert(rv.front() == 10);
-    assert(rv.back() == 30);
-    assert(rv.at(1) == 20);
-
-    // test insert
-    rv.insert(1, 15); // 10, 15, 20, 30
-    assert(rv.size() == 4);
-    assert(rv[1] == 15);
-    assert(rv[2] == 20);
-
-    // test erase
-    rv.erase(2); // 10, 15, 30
-    assert(rv.size() == 3);
-    assert(rv[2] == 30);
-
-    // test resize larger
-    rv.resize(5);
-    assert(rv.size() == 5);
-    assert(rv[3] == 0); // def init
-    assert(rv[4] == 0);
-
-    // test reszie smaller
-    rv.resize(2);
-    assert(rv.size() == 2);
-    assert(rv[0] == 10);
-    assert(rv[1] == 15);
-
-    // test clear func
-    rv.clear();
-    assert(rv.size() == 0);
-    assert(rv.empty());
-
-    std::cout << "All sanity checks passed." << std::endl;
-    */
-
     rvec::rope_vector<int> rv;
 
-    // add some data
+    // push_back
     for (int i = 1; i <= 5; ++i)
     {
-        rv.push_back(i * 10); // 10, 20, 30, 40, 50
+        rv.push_back(i * 10);
     }
 
-    std::cout << "Mutable iteration using iterator:" << std::endl;
-    for (auto it = rv.begin(); it != rv.end(); ++it)
+    std::cout << "Initial values with operator[]: ";
+    for (std::size_t i = 0; i < rv.size(); ++i)
     {
-        std::cout << *it << " ";
-        *it += 1; // testing write access
+        std::cout << rv[i] << " ";
     }
     std::cout << std::endl;
 
-    std::cout << "Const iteration using const_iterator:" << std::endl;
-    const rvec::rope_vector<int>& const_ref = rv;
+    // at(), front(), back()
+    std::cout << "at(2): " << rv.at(2) << std::endl;
+    std::cout << "front: " << rv.front() << std::endl;
+    std::cout << "back: " << rv.back() << std::endl;
 
-    for (auto it = const_ref.begin(); it != const_ref.end(); ++it)
-    {
-        std::cout << *it << " "; // cant mutate
-        // *it += 1; // this triggers a compiler error!!!!
-    }
-    std::cout << std::endl;
-
-    std::cout << "Range-based for loop on const ref:" << std::endl;
-    for (const auto& val : const_ref)
+    // insert and erase
+    rv.insert(2, 999);
+    std::cout << "After insert at position 2: ";
+    for (auto val : rv)
     {
         std::cout << val << " ";
     }
     std::cout << std::endl;
+
+    rv.erase(2);
+    std::cout << "After erase at position 2: ";
+    for (auto val : rv)
+    {
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
+
+    // const_iterator
+    const rvec::rope_vector<int>& crv = rv;
+    std::cout << "Using const_iterator: ";
+    for (auto it = crv.cbegin(); it != crv.cend(); ++it)
+    {
+        std::cout << *it << " ";
+    }
+    std::cout << std::endl;
+
+    // reverse_iterator
+    std::cout << "Using reverse_iterator: ";
+    for (auto it = rv.rbegin(); it != rv.rend(); ++it)
+    {
+        std::cout << *it << " ";
+    }
+    std::cout << std::endl;
+
+    // const_reverse_iterator
+    std::cout << "Using const_reverse_iterator: ";
+    for (auto it = crv.crbegin(); it != crv.crend(); ++it)
+    {
+        std::cout << *it << " ";
+    }
+    std::cout << std::endl;
+
+    // resize and clear
+    rv.resize(3);
+    std::cout << "After resize(3): ";
+    for (auto val : rv)
+    {
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
+
+    rv.clear();
+    std::cout << "After clear(), size: " << rv.size() << ", empty: " << rv.empty() << std::endl;
+
     return 0;
 }
