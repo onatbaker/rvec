@@ -33,12 +33,43 @@ namespace rvec
         {
             while (i >= chunks.size() * ChunkSize)
             {
-                chunks.emplace_back(std::make_unique<T[]>(ChunkSize));
+                // chunks.emplace_back(std::make_unique<T[]>(ChunkSize));
+                chunks.emplace_back(allocate_chunk()); // decouples allocation logic from smart pointer strategy
             }
+        }
+
+        T* allocate_chunk()
+        {
+            return new T[ChunkSize];
+        }
+
+        void free_chunk(T* chunk)
+        {
+            delete[] chunk;
         }
 
     public:
         rope_vector() = default;
+
+        // move constructor
+        rope_vector(rope_vector&& other) noexcept
+            : chunks(std::move(other.chunks)),
+            total_size(other.total_size)
+        {
+            other.total_size = 0;
+        }
+
+        // move assignment
+        rope_vector& operator=(rope_vector&& other) noexcept
+        {
+            if (this != &other)
+            {
+                chunks = std::move(other.chunks);
+                total_size = other.total_size;
+                other.total_size = 0;
+            }
+            return *this;
+        }
 
         size_type size() const noexcept
         {
@@ -138,6 +169,32 @@ namespace rvec
             }
         }
 
+        // ensures enough chunks to hold at least n elements
+        void reserve(size_type n)
+        {
+            if (n > capacity())
+            {
+                ensure_capacity_for(n - 1);
+            }
+        }
+
+        // returns how many elements can be stored without growing
+        size_type capacity() const noexcept
+        {
+            return chunks.size() * ChunkSize;
+        }
+
+        // deallocates unused chunks beyond current size
+        void shrink_to_fit()
+        {
+            size_type required_chunks = chunk_index(total_size) + (within_chunk_index(total_size) ? 1 : 0);
+            while (chunks.size() > required_chunks)
+            {
+                free_chunk(chunks.back().release());
+                chunks.pop_back();
+            }
+        }
+
         void push_back(const T& value)
         {
             ensure_capacity_for(total_size);
@@ -152,21 +209,30 @@ namespace rvec
             ++total_size;
         }
 
-        void insert(size_type pos, const T& value)
+        template <typename... Args>
+        void emplace_back(Args&&... args)
+        {
+            ensure_capacity_for(total_size);
+            new (&chunks[chunk_index(total_size)][within_chunk_index(total_size)])
+                T(std::forward<Args>(args)...);
+            ++total_size;
+        } // constructs T in-place using placement new to avoid copies or moves
+
+        void insert(size_type pos, T&& value)
         {
             if (pos > total_size)
             {
                 throw std::out_of_range("insert position out of bounds");
             }
 
-            push_back(T{});
+            push_back(T{}); // extend space for 1 more element
 
             for (size_type i = total_size - 1; i > pos; --i)
             {
                 (*this)[i] = std::move((*this)[i - 1]);
             }
 
-            (*this)[pos] = value;
+            (*this)[pos] = std::move(value);
         }
 
         void erase(size_type pos)
@@ -183,6 +249,36 @@ namespace rvec
 
             --total_size;
         }
+
+        bool operator==(const rope_vector& other) const
+        {
+            if (total_size != other.total_size)
+            {
+                return false;
+            }
+
+            for (size_type i = 0; i < total_size; ++i)
+            {
+                if ((*this)[i] != other[i])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        bool operator!=(const rope_vector& other) const
+        {
+            return !(*this == other);
+        }
+
+        void swap(rope_vector& other) noexcept
+        {
+            chunks.swap(other.chunks);
+            std::swap(total_size, other.total_size);
+        }
+
 
         class iterator
         {
@@ -709,4 +805,10 @@ namespace rvec
             return const_reverse_iterator(this, 0);
         }
     };
+
+    template <typename T, std::size_t ChunkSize>
+    void swap(rope_vector<T, ChunkSize>& a, rope_vector<T, ChunkSize>& b) noexcept
+    {
+        a.swap(b);
+    }
 } // namespace rvec
