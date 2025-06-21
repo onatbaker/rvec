@@ -3,6 +3,7 @@
 #include "rvec/rope_vector.hpp"
 
 int main() {
+    /*
     using rvec::rope_vector;
 
     rope_vector<int> rv;
@@ -54,5 +55,39 @@ int main() {
     assert(rv.empty());
 
     std::cout << "All sanity checks passed." << std::endl;
+    */
+
+    rvec::rope_vector<int> rv;
+
+    // add some data
+    for (int i = 1; i <= 5; ++i)
+    {
+        rv.push_back(i * 10); // 10, 20, 30, 40, 50
+    }
+
+    std::cout << "Mutable iteration using iterator:" << std::endl;
+    for (auto it = rv.begin(); it != rv.end(); ++it)
+    {
+        std::cout << *it << " ";
+        *it += 1; // testing write access
+    }
+    std::cout << std::endl;
+
+    std::cout << "Const iteration using const_iterator:" << std::endl;
+    const rvec::rope_vector<int>& const_ref = rv;
+
+    for (auto it = const_ref.begin(); it != const_ref.end(); ++it)
+    {
+        std::cout << *it << " "; // cant mutate
+        // *it += 1; // this triggers a compiler error!!!!
+    }
+    std::cout << std::endl;
+
+    std::cout << "Range-based for loop on const ref:" << std::endl;
+    for (const auto& val : const_ref)
+    {
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
     return 0;
 }

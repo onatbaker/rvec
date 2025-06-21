@@ -309,6 +309,145 @@ namespace rvec
         {
             return iterator(this, total_size);
         }
-    };
 
+        class const_iterator
+        {
+        public:
+            using iterator_category = std::random_access_iterator_tag;
+            using value_type = T;
+            using difference_type = std::ptrdiff_t;
+            using pointer = const T*;
+            using reference = const T&;
+
+        private:
+            const rope_vector* parent = nullptr;
+            size_type index = 0;
+
+        public:
+            const_iterator() = default;
+
+            const_iterator(const rope_vector* rv, size_type i)
+                : parent(rv), index(i)
+            {
+            }
+
+            reference operator*() const
+            {
+                return (*parent)[index];
+            }
+
+            pointer operator->() const
+            {
+                return &(*parent)[index];
+            }
+
+            const_iterator& operator++()
+            {
+                ++index;
+                return *this;
+            }
+
+            const_iterator operator++(int)
+            {
+                const_iterator tmp = *this;
+                ++(*this);
+                return tmp;
+            }
+
+            const_iterator& operator--()
+            {
+                --index;
+                return *this;
+            }
+
+            const_iterator operator--(int)
+            {
+                const_iterator tmp = *this;
+                --(*this);
+                return tmp;
+            }
+
+            const_iterator& operator+=(difference_type n)
+            {
+                index += n;
+                return *this;
+            }
+
+            const_iterator& operator-=(difference_type n)
+            {
+                index -= n;
+                return *this;
+            }
+
+            const_iterator operator+(difference_type n) const
+            {
+                return const_iterator(parent, index + n);
+            }
+
+            const_iterator operator-(difference_type n) const
+            {
+                return const_iterator(parent, index - n);
+            }
+
+            difference_type operator-(const const_iterator& other) const
+            {
+                return static_cast<difference_type>(index) - static_cast<difference_type>(other.index);
+            }
+
+            reference operator[](difference_type n) const
+            {
+                return (*parent)[index + n];
+            }
+
+            bool operator==(const const_iterator& other) const
+            {
+                return parent == other.parent && index == other.index;
+            }
+
+            bool operator!=(const const_iterator& other) const
+            {
+                return !(*this == other);
+            }
+
+            bool operator<(const const_iterator& other) const
+            {
+                return index < other.index;
+            }
+
+            bool operator>(const const_iterator& other) const
+            {
+                return index > other.index;
+            }
+
+            bool operator<=(const const_iterator& other) const
+            {
+                return index <= other.index;
+            }
+
+            bool operator>=(const const_iterator& other) const
+            {
+                return index >= other.index;
+            }
+        };
+
+        const_iterator cbegin() const noexcept
+        {
+            return const_iterator(this, 0);
+        }
+
+        const_iterator cend() const noexcept
+        {
+            return const_iterator(this, total_size);
+        }
+
+        const_iterator begin() const noexcept
+        {
+            return cbegin();
+        }
+
+        const_iterator end() const noexcept
+        {
+            return cend();
+        }
+    };
 } // namespace rvec
