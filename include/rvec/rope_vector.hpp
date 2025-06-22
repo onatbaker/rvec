@@ -3,7 +3,6 @@
 #include <vector>
 #include <memory>
 #include <cassert>
-#include <stdexcept>
 
 namespace rvec
 {
@@ -125,58 +124,41 @@ namespace rvec
 
         T& at(size_type i)
         {
-            if (i >= total_size)
-            {
-                throw std::out_of_range("rvec::at() index out of range");
-            }
+            assert(i < total_size && "rvec::at() index out of range");
             return (*this)[i];
         }
 
         const T& at(size_type i) const
         {
-            if (i >= total_size)
-            {
-                throw std::out_of_range("rvec::at() index out of range");
-            }
+            assert(i < total_size && "rvec::at() index out of range");
             return (*this)[i];
         }
 
         T& front()
         {
-            if (empty())
-            {
-                throw std::out_of_range("rvec::front() called on empty vector");
-            }
+            assert(!empty() && "rvec::front() called on empty vector");
             return (*this)[0];
         }
 
         const T& front() const
         {
-            if (empty())
-            {
-                throw std::out_of_range("rvec::front() called on empty vector");
-            }
+            assert(!empty() && "rvec::front() called on empty vector");
             return (*this)[0];
         }
 
         T& back()
         {
-            if (empty())
-            {
-                throw std::out_of_range("rvec::back() called on empty vector");
-            }
+            assert(!empty() && "rvec::back() called on empty vector");
             return (*this)[total_size - 1];
         }
 
         const T& back() const
         {
-            if (empty())
-            {
-                throw std::out_of_range("rvec::back() called on empty vector");
-            }
+            assert(!empty() && "rvec::back() called on empty vector");
             return (*this)[total_size - 1];
         }
 
+        // TODO: we reset the logical size but don't free the memory. handle l8r
         void clear()
         {
             total_size = 0;
@@ -220,7 +202,8 @@ namespace rvec
             size_type required_chunks = chunk_index(total_size) + (within_chunk_index(total_size) ? 1 : 0);
             while (chunks.size() > required_chunks)
             {
-                free_chunk(chunks.back().release());
+                // free_chunk(chunks.back().release());
+                free_chunk(chunks.back()); // no more unique_ptr
                 chunks.pop_back();
             }
         }
@@ -248,29 +231,27 @@ namespace rvec
             ++total_size;
         } // constructs T in-place using placement new to avoid copies or moves
 
+        // TODO: insert optimization - choose the cheapest direction to shift existing elements...
+        // ...improves performance for mid/front insertions by avoiding unnecessary moves
         void insert(size_type pos, T&& value)
         {
-            if (pos > total_size)
-            {
-                throw std::out_of_range("insert position out of bounds");
-            }
+            assert(pos <= total_size && "insert position out of bounds");
 
-            push_back(T{}); // extend space for 1 more element
+            ensure_capacity_for(total_size);
 
-            for (size_type i = total_size - 1; i > pos; --i)
+            for (size_type i = total_size; i > pos; --i)
             {
                 (*this)[i] = std::move((*this)[i - 1]);
             }
 
             (*this)[pos] = std::move(value);
+            ++total_size;
         }
 
         void erase(size_type pos)
         {
-            if (pos >= total_size)
-            {
-                throw std::out_of_range("erase position out of bounds");
-            }
+
+            assert(pos < total_size && "erase position out of bounds");
 
             for (size_type i = pos; i < total_size - 1; ++i)
             {

@@ -117,6 +117,7 @@ int main() {
     assigned = std::move(moved);
     std::cout << "After move assignment to assigned, assigned.size(): " << assigned.size() << std::endl;
     */
+
     std::cout << "test: memory_used() and fragmentation() " << std::endl;
 
     rvec::rope_vector<int> memtest;
@@ -127,6 +128,30 @@ int main() {
 
     std::cout << "memory used (bytes): " << memtest.memory_used() << std::endl;
     std::cout << "fragmentation: " << memtest.fragmentation() << std::endl << std::endl;
+    
+    /*
+    * TODO: get back to this once smart insert works properly.
+    std::cout << "test: smart insert() strategy" << std::endl;
+    rvec::rope_vector<std::string> words;
+    words.emplace_back("zero");
+    words.emplace_back("one");
+    words.emplace_back("two");
+    words.emplace_back("three");
+
+    words.insert(3, "inserted-near-end");
+    for (const auto& w : words)
+    {
+        std::cout << w << " ";
+    }
+    std::cout << std::endl;
+
+    words.insert(1, "inserted-near-start");
+    for (const auto& w : words)
+    {
+        std::cout << w << " ";
+    }
+    std::cout << std::endl << std::endl;
+    */
 
     return 0;
 }
