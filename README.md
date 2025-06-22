@@ -101,6 +101,31 @@ Some may suggest `std::unordered_map<size_t, T>` as an alternative. Here's the d
 | Random insert cost     | O(log n)          | O(1)                       |
 | Dense access semantics | Yes               | No                         |
 
+### 6. STL Compatibility
+
+`rope_vector` supports a wide range of STL-style features:
+
+- Iteration via `begin()`, `end()`, `rbegin()`, `rend()`, `cbegin()`, `crend()`
+- Member functions like `push_back()`, `insert()`, `erase()`, `clear()`, `resize()`, `shrink_to_fit()`, `swap()`
+- Value access via `operator[]`, `.at()`, `.front()`, `.back()`
+
+### 7. Manual Memory Management
+
+To support low-level and exception-free environments:
+
+- `allocate_chunk()` and `free_chunk()` are used in place of STL allocators
+- This prepares for later replacement with custom pools, arenas, or low-level allocators
+
+### 8. Exception-Free Design
+
+- All bounds checking uses `assert()` instead of throwing exceptions
+- Suitable for kernel-space or freestanding environments where exceptions are banned
+
+### 9. Memory Introspection
+
+- `.memory_used()` reports actual bytes allocated
+- `.fragmentation()` calculates the fraction of unused but allocated chunk space
+
 ---
 
 ## Example Usage
@@ -134,6 +159,10 @@ cmake --build .
 Requires: CMake 3.14+, C++14+, MSVC or Clang/GCC
 
 ---
+
+## Benchmarks
+
+
 
 ---
 
