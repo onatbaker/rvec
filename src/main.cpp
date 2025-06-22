@@ -79,6 +79,7 @@ int main() {
     std::cout << "After clear(), size: " << rv.size() << ", empty: " << rv.empty() << std::endl;
     */
 
+    /*
     // emplace_back
     rvec::rope_vector<std::pair<int, std::string>> pair_vec;
     pair_vec.emplace_back(1, "one");
@@ -115,7 +116,17 @@ int main() {
     rvec::rope_vector<int> assigned;
     assigned = std::move(moved);
     std::cout << "After move assignment to assigned, assigned.size(): " << assigned.size() << std::endl;
+    */
+    std::cout << "test: memory_used() and fragmentation() " << std::endl;
+
+    rvec::rope_vector<int> memtest;
+    for (int i = 0; i < 600; ++i)
+    {
+        memtest.emplace_back(i);
+    }
+
+    std::cout << "memory used (bytes): " << memtest.memory_used() << std::endl;
+    std::cout << "fragmentation: " << memtest.fragmentation() << std::endl << std::endl;
 
     return 0;
-
 }

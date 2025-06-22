@@ -15,8 +15,36 @@ namespace rvec
         using value_type = T;
         using size_type = std::size_t;
 
+        ~rope_vector()
+        {
+            for (T* chunk : chunks)
+            {
+                free_chunk(chunk);
+            }
+        }
+
+        size_type memory_used() const
+        {
+            // returns total memory used by all chunks in bytes
+            return chunks.size() * ChunkSize * sizeof(T);
+        }
+
+        double fragmentation() const
+        {
+            // returns 1.0 = completely unused; 0.0 = fully packed
+            if (chunks.empty())
+            {
+                return 0.0;
+            }
+
+            size_type used_slots = total_size;
+            size_type total_slots = chunks.size() * ChunkSize;
+
+            return 1.0 - static_cast<double>(used_slots) / total_slots;
+        }
+
     private:
-        std::vector<std::unique_ptr<T[]>> chunks;
+        std::vector<T*> chunks;
         size_type total_size = 0;
 
         static constexpr size_type chunk_index(size_type i)
@@ -40,11 +68,13 @@ namespace rvec
 
         T* allocate_chunk()
         {
+            std::cout << "[allocating chunk]" << std::endl;
             return new T[ChunkSize];
         }
 
         void free_chunk(T* chunk)
         {
+            std::cout << "[freeing chunk]" << std::endl;
             delete[] chunk;
         }
 
