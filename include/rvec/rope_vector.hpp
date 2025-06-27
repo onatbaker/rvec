@@ -45,6 +45,8 @@ namespace rvec
     private:
         std::vector<T*> chunks;
         size_type total_size = 0;
+        size_type start_index = 0; // for logical indexing
+        size_type front_chunk_index = 0;
 
         static constexpr size_type chunk_index(size_type i)
         {
@@ -65,15 +67,22 @@ namespace rvec
             }
         }
 
+        void grow_front()
+        {
+            chunks.insert(chunks.begin(), allocate_chunk());
+            start_index += ChunkSize;
+            ++front_chunk_index;
+        }
+
         T* allocate_chunk()
         {
-            std::cout << "[allocating chunk]" << std::endl;
+            // std::cout << "[allocating chunk]" << std::endl;
             return new T[ChunkSize];
         }
 
         void free_chunk(T* chunk)
         {
-            std::cout << "[freeing chunk]" << std::endl;
+            // std::cout << "[freeing chunk]" << std::endl;
             delete[] chunk;
         }
 
@@ -83,9 +92,13 @@ namespace rvec
         // move constructor
         rope_vector(rope_vector&& other) noexcept
             : chunks(std::move(other.chunks)),
-            total_size(other.total_size)
+            total_size(other.total_size),
+            start_index(other.start_index),
+            front_chunk_index(other.front_chunk_index)
         {
             other.total_size = 0;
+            other.start_index = 0;
+            other.front_chunk_index = 0;
         }
 
         // move assignment
@@ -95,7 +108,11 @@ namespace rvec
             {
                 chunks = std::move(other.chunks);
                 total_size = other.total_size;
+                start_index = other.start_index;
+                front_chunk_index = other.front_chunk_index;
                 other.total_size = 0;
+                other.start_index = 0;
+                other.front_chunk_index = 0;
             }
             return *this;
         }
@@ -113,13 +130,15 @@ namespace rvec
         T& operator[](size_type i)
         {
             assert(i < total_size);
-            return chunks[chunk_index(i)][within_chunk_index(i)];
+            size_type real_index = start_index + i;
+            return chunks[front_chunk_index + chunk_index(real_index)][within_chunk_index(real_index)];
         }
 
         const T& operator[](size_type i) const
         {
             assert(i < total_size);
-            return chunks[chunk_index(i)][within_chunk_index(i)];
+            size_type real_index = start_index + i;
+            return chunks[front_chunk_index + chunk_index(real_index)][within_chunk_index(real_index)];
         }
 
         T& at(size_type i)
@@ -161,7 +180,14 @@ namespace rvec
         // TODO: we reset the logical size but don't free the memory. handle l8r
         void clear()
         {
+            for (auto chunk : chunks)
+            {
+                free_chunk(chunk);
+            }
+            chunks.clear();
             total_size = 0;
+            start_index = 0;
+            front_chunk_index = 0;
         }
 
         void resize(size_type new_size)
@@ -172,7 +198,7 @@ namespace rvec
             }
             else
             {
-                ensure_capacity_for(new_size - 1);
+                ensure_capacity_for(start_index + new_size - 1);
                 for (size_type i = total_size; i < new_size; ++i)
                 {
                     chunks[chunk_index(i)][within_chunk_index(i)] = T{};
@@ -186,20 +212,20 @@ namespace rvec
         {
             if (n > capacity())
             {
-                ensure_capacity_for(n - 1);
+                ensure_capacity_for(start_index + n - 1);
             }
         }
 
         // returns how many elements can be stored without growing
         size_type capacity() const noexcept
         {
-            return chunks.size() * ChunkSize;
+            return (chunks.size() - front_chunk_index) * ChunkSize - start_index;
         }
 
         // deallocates unused chunks beyond current size
         void shrink_to_fit()
         {
-            size_type required_chunks = chunk_index(total_size) + (within_chunk_index(total_size) ? 1 : 0);
+            size_type required_chunks = chunk_index(start_index + total_size) + (within_chunk_index(start_index + total_size) ? 1 : 0);
             while (chunks.size() > required_chunks)
             {
                 // free_chunk(chunks.back().release());
@@ -210,47 +236,71 @@ namespace rvec
 
         void push_back(const T& value)
         {
-            ensure_capacity_for(total_size);
-            chunks[chunk_index(total_size)][within_chunk_index(total_size)] = value;
-            ++total_size;
+            ensure_capacity_for(start_index + total_size);
+            (*this)[total_size++] = value;
         }
 
         void push_back(T&& value)
         {
-            ensure_capacity_for(total_size);
-            chunks[chunk_index(total_size)][within_chunk_index(total_size)] = std::move(value);
-            ++total_size;
+            ensure_capacity_for(start_index + total_size);
+            (*this)[total_size++] = std::move(value);
         }
 
         template <typename... Args>
         void emplace_back(Args&&... args)
         {
-            ensure_capacity_for(total_size);
-            new (&chunks[chunk_index(total_size)][within_chunk_index(total_size)])
-                T(std::forward<Args>(args)...);
-            ++total_size;
-        } // constructs T in-place using placement new to avoid copies or moves
+            ensure_capacity_for(start_index + total_size);
+            new (&(*this)[total_size++]) T(std::forward<Args>(args)...);
+        }
 
         // TODO: insert optimization - choose the cheapest direction to shift existing elements...
         // ...improves performance for mid/front insertions by avoiding unnecessary moves
         void insert(size_type pos, T&& value)
         {
-            assert(pos <= total_size && "insert position out of bounds");
+            assert(pos <= total_size);
+            ensure_capacity_for(start_index + total_size);
 
-            ensure_capacity_for(total_size);
-
-            for (size_type i = total_size; i > pos; --i)
+            if (pos == 0)
             {
-                (*this)[i] = std::move((*this)[i - 1]);
+                if (start_index == 0)
+                {
+                    grow_front();
+                }
+                --start_index;
+                ++total_size;
+                (*this)[0] = std::move(value);
             }
-
-            (*this)[pos] = std::move(value);
-            ++total_size;
+            else if (pos == total_size)
+            {
+                push_back(std::move(value));
+            }
+            else if (pos < total_size / 2)
+            {
+                if (start_index == 0)
+                {
+                    grow_front();
+                }
+                --start_index;
+                ++total_size;
+                for (size_type i = 0; i < pos; ++i)
+                {
+                    (*this)[i] = std::move((*this)[i + 1]);
+                }
+                (*this)[pos] = std::move(value);
+            }
+            else
+            {
+                for (size_type i = total_size; i > pos; --i)
+                {
+                    (*this)[i] = std::move((*this)[i - 1]);
+                }
+                (*this)[pos] = std::move(value);
+                ++total_size;
+            }
         }
 
         void erase(size_type pos)
         {
-
             assert(pos < total_size && "erase position out of bounds");
 
             for (size_type i = pos; i < total_size - 1; ++i)
@@ -259,6 +309,21 @@ namespace rvec
             }
 
             --total_size;
+        }
+
+        void erase_front()
+        {
+            assert(!empty());
+
+            ++start_index;
+            --total_size;
+
+            if (start_index >= ChunkSize)
+            {
+                free_chunk(chunks[front_chunk_index]);
+                ++front_chunk_index;
+                start_index -= ChunkSize;
+            }
         }
 
         bool operator==(const rope_vector& other) const
@@ -288,6 +353,8 @@ namespace rvec
         {
             chunks.swap(other.chunks);
             std::swap(total_size, other.total_size);
+            std::swap(start_index, other.start_index);
+            std::swap(front_chunk_index, other.front_chunk_index);
         }
 
 
