@@ -162,7 +162,7 @@ Requires: CMake 3.14+, C++14+, MSVC or Clang/GCC
 
 ## Benchmarks
 
-
+![Benchmarks](benchmark_results/rope_vector_benchmark.png)
 
 ---
 
@@ -174,7 +174,6 @@ Designed and implemented by your slick yet friendly neighbourhood dev ob. The wo
 
 ## Future Directions
 
-- Iterator support (STL-compatible)
 - Undo/redo block mutation APIs
 - Parallel merges
 - Persistent memory chunk support
